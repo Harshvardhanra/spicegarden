@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitchen Display — Spice Garden</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0A0A;--card:#141414;--border:#252525;
+  --text:#F0EDE8;--muted:#6B6660;
+  --gold:#C9A84C;--gold-bg:rgba(201,168,76,0.1);
+  --green:#27AE60;--green-bg:rgba(39,174,96,0.1);
+  --orange:#E67E22;--orange-bg:rgba(230,126,34,0.1);
+  --red:#E74C3C;--red-bg:rgba(231,76,60,0.1);
+  --blue:#3498DB;--blue-bg:rgba(52,152,219,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+.topbar{
+  background:#000;
+  padding:0 28px;height:64px;
+  display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;
+}
+.logo{
+  font-family:'Playfair Display',serif;
+  font-size:20px;color:var(--gold);
+  display:flex;align-items:center;gap:10px;
+}
+.logo-sub{font-size:12px;color:var(--muted);font-family:'DM Sans',sans-serif;}
+.topbar-right{display:flex;align-items:center;gap:20px;}
+.live-badge{
+  display:flex;align-items:center;gap:6px;
+  background:var(--green-bg);border:1px solid rgba(39,174,96,0.3);
+  padding:5px 12px;border-radius:20px;
+}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1.8s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.live-txt{font-size:12px;color:var(--green);font-weight:600;}
+.clock{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text);}
+.nav-links{display:flex;gap:8px;}
+.nav-link{
+  background:none;border:1px solid var(--border);
+  color:var(--muted);padding:6px 14px;
+  border-radius:8px;font-size:13px;font-weight:500;
+  font-family:'DM Sans',sans-serif;cursor:pointer;
+  text-decoration:none;
+  transition:all 0.18s;
+}
+.nav-link:hover{color:var(--text);border-color:var(--muted);}
+
+/* KPI strip */
+.kpi-strip{
+  display:flex;gap:1px;
+  background:var(--border);
+  border-bottom:1px solid var(--border);
+}
+.kpi{
+  flex:1;background:var(--card);
+  padding:16px 24px;
+  display:flex;align-items:center;gap:14px;
+}
+.kpi-icon{
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+}
+.kpi-body{}
+.kpi-val{font-size:26px;font-weight:700;}
+.kpi-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:1px;}
+.kpi.k-new .kpi-icon{background:var(--red-bg);}
+.kpi.k-new .kpi-val{color:var(--red);}
+.kpi.k-prep .kpi-icon{background:var(--orange-bg);}
+.kpi.k-prep .kpi-val{color:var(--orange);}
+.kpi.k-ready .kpi-icon{background:var(--green-bg);}
+.kpi.k-ready .kpi-val{color:var(--green);}
+.kpi.k-done .kpi-icon{background:var(--blue-bg);}
+.kpi.k-done .kpi-val{color:var(--blue);}
+
+/* Filter bar */
+.filter-bar{
+  padding:16px 24px;display:flex;gap:8px;align-items:center;
+  border-bottom:1px solid var(--border);
+}
+.filter-lbl{font-size:12px;color:var(--muted);margin-right:4px;letter-spacing:0.5px;}
+.f-btn{
+  background:none;border:1px solid var(--border);
+  color:var(--muted);padding:6px 16px;
+  border-radius:20px;font-size:13px;font-weight:500;
+  font-family:'DM Sans',sans-serif;cursor:pointer;
+  transition:all 0.18s;
+}
+.f-btn:hover{border-color:var(--muted);color:var(--text);}
+.f-btn.active{background:var(--gold);border-color:var(--gold);color:#000;}
+.f-btn.f-new.active{background:var(--red);border-color:var(--red);color:#fff;}
+.f-btn.f-prep.active{background:var(--orange);border-color:var(--orange);color:#fff;}
+.f-btn.f-ready.active{background:var(--green);border-color:var(--green);color:#fff;}
+
+/* Order grid */
+.orders-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:16px;
+  padding:20px 24px;
+}
+.order-card{
+  background:var(--card);
+  border-radius:16px;
+  border:1px solid var(--border);
+  overflow:hidden;
+  animation:cardIn 0.3s ease;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.card-stripe{height:4px;}
+.stripe-new{background:linear-gradient(90deg,var(--red),#ff6b6b);}
+.stripe-preparing{background:linear-gradient(90deg,var(--orange),#ffd080);}
+.stripe-ready{background:linear-gradient(90deg,var(--green),#7bed9f);}
+
+.card-header{
+  padding:14px 18px 12px;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:1px solid var(--border);
+}
+.order-id-label{
+  font-family:'Playfair Display',serif;
+  font-size:18px;font-weight:700;color:var(--text);
+}
+.table-label{font-size:12px;color:var(--muted);margin-top:2px;}
+.status-tag{
+  font-size:10px;font-weight:700;
+  padding:4px 10px;border-radius:6px;
+  text-transform:uppercase;letter-spacing:0.5px;
+}
+.tag-pending{background:var(--red-bg);color:var(--red);}
+.tag-preparing{background:var(--orange-bg);color:var(--orange);}
+.tag-ready{background:var(--green-bg);color:var(--green);}
+.timer-row{
+  font-size:12px;color:var(--muted);
+  margin-top:5px;font-variant-numeric:tabular-nums;
+}
+.timer-row.urgent{color:var(--red);font-weight:600;}
+
+.items-body{padding:12px 18px;}
+.item-line{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 0;
+  border-bottom:1px solid #1E1E1E;
+  font-size:14px;
+}
+.item-line:last-child{border-bottom:none;}
+.item-l{display:flex;align-items:center;gap:8px;}
+.item-qty-badge{
+  background:#1E1E1E;color:var(--muted);
+  width:26px;height:26px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;flex-shrink:0;
+}
+.note-chip{
+  margin:0 18px 12px;
+  background:rgba(230,126,34,0.08);
+  border:1px solid rgba(230,126,34,0.2);
+  border-radius:8px;
+  padding:8px 12px;
+  font-size:12px;color:var(--orange);
+}
+.card-footer{
+  padding:12px 18px;border-top:1px solid var(--border);
+  display:flex;gap:8px;
+}
+.k-btn{
+  flex:1;padding:10px 0;border:none;border-radius:10px;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;
+  transition:all 0.18s;
+}
+.k-btn:hover{filter:brightness(1.1);}
+.k-start{background:var(--orange);color:#fff;}
+.k-ready{background:var(--green);color:#fff;}
+.k-served{background:#1E1E1E;color:var(--muted);}
+
+.empty-grid{
+  grid-column:1/-1;text-align:center;
+  padding:80px 20px;color:var(--muted);
+}
+.empty-icon{font-size:52px;margin-bottom:14px;}
+.empty-txt{font-size:16px;}
+
+/* toast */
+.toast{
+  position:fixed;top:80px;right:24px;
+  background:var(--red);color:#fff;
+  padding:14px 20px;border-radius:12px;
+  font-size:14px;font-weight:600;
+  z-index:999;pointer-events:none;
+  animation:toastIn 3.5s ease forwards;
+  box-shadow:0 8px 24px rgba(231,76,60,0.4);
+}
+@keyframes toastIn{
+  0%{opacity:0;transform:translateX(20px)}
+  10%{opacity:1;transform:translateX(0)}
+  80%{opacity:1}100%{opacity:0}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    🍳 Kitchen Display
+    <span class="logo-sub">Spice Garden</span>
+  </div>
+  <div class="topbar-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span class="live-txt">LIVE</span>
+    </div>
+    <div class="clock" id="clock"></div>
+    <div class="nav-links">
+      <a href="/dashboard/" class="nav-link">📊 Dashboard</a>
+      <a href="/menu/?table=1" class="nav-link">📱 Menu</a>
+    </div>
+  </div>
+</div>
+
+<div class="kpi-strip">
+  <div class="kpi k-new"><div class="kpi-icon">🔴</div><div class="kpi-body"><div class="kpi-val" id="kNew">0</div><div class="kpi-lbl">New Orders</div></div></div>
+  <div class="kpi k-prep"><div class="kpi-icon">🟠</div><div class="kpi-body"><div class="kpi-val" id="kPrep">0</div><div class="kpi-lbl">Preparing</div></div></div>
+  <div class="kpi k-ready"><div class="kpi-icon">🟢</div><div class="kpi-body"><div class="kpi-val" id="kReady">0</div><div class="kpi-lbl">Ready</div></div></div>
+  <div class="kpi k-done"><div class="kpi-icon">✅</div><div class="kpi-body"><div class="kpi-val" id="kDone">0</div><div class="kpi-lbl">Served Today</div></div></div>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-lbl">FILTER</span>
+  <button class="f-btn active" onclick="setFilter('all',this)">All</button>
+  <button class="f-btn f-new" onclick="setFilter('pending',this)">🔴 New</button>
+  <button class="f-btn f-prep" onclick="setFilter('preparing',this)">🟠 Preparing</button>
+  <button class="f-btn f-ready" onclick="setFilter('ready',this)">🟢 Ready</button>
+</div>
+
+<div class="orders-grid" id="grid"></div>
+
+<script>
+let orders = [];
+let doneCount = 0;
+let filterStatus = 'all';
+
+function setFilter(s, el) {
+  filterStatus = s;
+  document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function fetchOrders() {
+  fetch('/api/orders/?status=' + (filterStatus === 'all' ? '' : filterStatus))
+    .then(r => r.json())
+    .then(data => {
+      const prev = orders.length;
+      orders = data.orders;
+      if (orders.length > prev && prev > 0) showToast('🔔 New Order — Table ' + orders[0].table);
+      render();
+    })
+    .catch(() => {});
+}
+
+function render() {
+  const visible = filterStatus === 'all' ? orders : orders.filter(o => o.status === filterStatus);
+  document.getElementById('kNew').textContent = orders.filter(o=>o.status==='pending').length;
+  document.getElementById('kPrep').textContent = orders.filter(o=>o.status==='preparing').length;
+  document.getElementById('kReady').textContent = orders.filter(o=>o.status==='ready').length;
+  document.getElementById('kDone').textContent = doneCount;
+
+  const grid = document.getElementById('grid');
+  if (!visible.length) {
+    grid.innerHTML = `<div class="empty-grid"><div class="empty-icon">✅</div><div class="empty-txt">All clear — no active orders</div></div>`;
+    return;
+  }
+  grid.innerHTML = visible.map(o => cardHTML(o)).join('');
+}
+
+function cardHTML(o) {
+  const created = new Date(o.created_at);
+  const elapsedMs = Date.now() - created.getTime();
+  const mins = Math.floor(elapsedMs / 60000);
+  const secs = Math.floor((elapsedMs % 60000) / 1000);
+  const urgent = mins >= 15 && o.status !== 'ready';
+  const stripeClass = {pending:'stripe-new',preparing:'stripe-preparing',ready:'stripe-ready'}[o.status] || 'stripe-new';
+  const tagClass = {pending:'tag-pending',preparing:'tag-preparing',ready:'tag-ready'}[o.status];
+  const tagLabel = {pending:'New',preparing:'Preparing',ready:'Ready'}[o.status];
+  let footer = '';
+  if (o.status === 'pending') footer = `<button class="k-btn k-start" onclick="advance(${o.id},'preparing')">▶ Start Preparing</button>`;
+  else if (o.status === 'preparing') footer = `<button class="k-btn k-ready" onclick="advance(${o.id},'ready')">✓ Mark Ready</button>`;
+  else footer = `<button class="k-btn k-served" onclick="advance(${o.id},'served')">🍽 Mark Served</button>`;
+  return `<div class="order-card">
+    <div class="card-stripe ${stripeClass}"></div>
+    <div class="card-header">
+      <div>
+        <div class="order-id-label">#${o.order_id}</div>
+        <div class="table-label">Table ${o.table}</div>
+        <div class="timer-row${urgent?' urgent':''}">⏱ ${mins}m ${secs}s ago</div>
+      </div>
+      <span class="status-tag ${tagClass}">${tagLabel}</span>
+    </div>
+    <div class="items-body">
+      ${o.items.map(i=>`<div class="item-line"><div class="item-l"><div class="item-qty-badge">×${i.qty}</div>${i.name}</div><div style="font-size:13px;color:var(--muted)">₹${(i.price*i.qty).toFixed(0)}</div></div>`).join('')}
+    </div>
+    ${o.special_instructions ? `<div class="note-chip">⚠️ ${o.special_instructions}</div>` : ''}
+    <div class="card-footer">${footer}</div>
+  </div>`;
+}
+
+function advance(id, newStatus) {
+  fetch(`/api/orders/${id}/status/`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({status: newStatus})
+  }).then(()=>{
+    if (newStatus === 'served') doneCount++;
+    fetchOrders();
+  });
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3600);
+}
+
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}, 1000);
+setInterval(fetchOrders, 8000);
+fetchOrders();
+</script>
+</body>
+</html>
